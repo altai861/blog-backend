@@ -10,6 +10,7 @@ const mongoose = require("mongoose")
 
 connectDB();
 
+app.use(cors());
 app.use(logger);
 app.use(express.urlencoded({ extended: false }))
 app.use(express.json())
@@ -17,6 +18,8 @@ app.use('/', express.static(path.join(__dirname, '/public')));
 
 
 app.use("/", require("./routes/root.js"))
+app.use("/blog", require("./routes/blogRoutes.js"));
+app.use("/auth", require("./routes/authRoutes.js"))
 
 app.all("*", (req, res) => {
     res.status(404);
