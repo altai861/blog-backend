@@ -60,8 +60,16 @@ const updateBlog = async (req, res) => {
 }
 
 const deleteBlog = async (req, res) => {
+    const { blogId } = req.body;
+    if (!blogId) {
+        return res.status(401).json({ message: "BlogId is required" });
+    }
+    const blog = await Blog.findById(blogId).exec();
+    const result = await blog.deleteOne();
+    const reply = `${result._id} deleted`;
 
-}
+    return res.json(reply)
+}   
 
 const deleteAll = async (req, res) => {
     await Blog.deleteMany()
@@ -75,9 +83,21 @@ const deleteAll = async (req, res) => {
 }
 
 
+const getSingleBlog = async (req, res) => {
+    const blogId = req.params.blogId;
+    const blog = await Blog.findById(blogId).exec();
+    if (!blog) {
+        return res.status(400).json({ message: "Blog not found" });
+    }
+    return res.json(blog)
+}
+
+
 module.exports = {
     getAllTheBlogs,
     addBlog,
     deleteAll,
-    updateBlog
+    updateBlog,
+    getSingleBlog,
+    deleteBlog
 }

@@ -15,4 +15,10 @@ router.route("/allDelete")
 router.route("/")
     .patch(blogControllers.updateBlog)
 
+router.route("/:blogId")
+    .get(blogControllers.getSingleBlog)
+
+router.route("/delete")
+    .post(blogControllers.deleteBlog);
+
 module.exports = router;
