@@ -8,12 +8,8 @@ router.route("/")
 router.route("/")
     .post(blogControllers.addBlog)
 
-
-router.route("/allDelete")
-    .delete(blogControllers.deleteAll)
-
 router.route("/")
-    .patch(blogControllers.updateBlog)
+    .put(blogControllers.updateBlog)
 
 router.route("/:blogId")
     .get(blogControllers.getSingleBlog)

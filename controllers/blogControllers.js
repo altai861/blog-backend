@@ -1,8 +1,9 @@
 const Blog = require("../models/Blog")
 const User = require("../models/User")
+const Meta = require("../models/Meta");
 
 const getAllTheBlogs = async (req, res) => {
-    const blogs = await Blog.find().lean();
+    const blogs = await Meta.find().lean();
     if (!blogs?.length) {
         return res.status(200).json({ message: 'No blogs' })
     }
@@ -10,31 +11,15 @@ const getAllTheBlogs = async (req, res) => {
 }
 
 const addBlog = async (req, res) => {
-    const { userId } = req.body;
+    const { content } = req.body;
 
-    if (!userId) return res.status(400).json({ message: "UserId is required" });
+    if (!content) return res.status(400).json({ message: "Fields are required" });
 
-    const foundUser = await User.findOne({ _id: userId }).exec();
-
-    if (!foundUser) return res.status(400).json({ message: "No user found" });
-
-    const content = {
-        "time": new Date().getTime(),
-        "blocks": [
-            {
-                "type": "header",
-                "data": {
-                    "text": "Hi",
-                    "level": 1
-                }
-            },
-        ]
-    }
-
-    const blog = await Blog.create({ userId, blogContent: content })
+    const blog = await Blog.create({ blogContent: content })
 
     if (blog) {
-        return res.status(201).json(blog);
+        const meta = await Meta.create({ blogId: blog._id, title: "TEST", createdDate: new Date(), modifiedDate: new Date() });
+        return res.status(201).json(meta);
     } else {
         return res.status(401).json({ message: "Blog could not created" });
     }
@@ -71,17 +56,6 @@ const deleteBlog = async (req, res) => {
     return res.json(reply)
 }   
 
-const deleteAll = async (req, res) => {
-    await Blog.deleteMany()
-    .then(() => {
-        return res.status(201).json({ message: "Deleted all blogs" })
-    })
-    .catch((err) => {
-        console.log(err)
-        return res.status(500).json({ message: "Internal server error" })
-    })
-}
-
 
 const getSingleBlog = async (req, res) => {
     const blogId = req.params.blogId;
@@ -96,7 +70,6 @@ const getSingleBlog = async (req, res) => {
 module.exports = {
     getAllTheBlogs,
     addBlog,
-    deleteAll,
     updateBlog,
     getSingleBlog,
     deleteBlog
