@@ -11,7 +11,7 @@ const corsOptions = require("./config/corsOptions.js")
 
 connectDB();
 
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(logger);
 app.use(express.urlencoded({ extended: false }))
 app.use(express.json())
