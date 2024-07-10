@@ -1,6 +1,59 @@
 const Blog = require("../models/Blog")
-const User = require("../models/User")
 const Meta = require("../models/Meta");
+
+const updateMetaInfoFromContent = async (blogId, content) => {
+    try {
+        // title
+        // categories
+        // modifiedDate
+        // imageLink
+        const blocks = content.blocks;
+        const result = {};
+        let foundTitle = false
+        let foundCategories = false;
+        let foundImage = false;
+        for (let i = 0; i < blocks.length; i++) {
+            if (blocks[i].type === "header" && !foundTitle) {
+                result["title"] = blocks[i].data.text;
+                foundTitle = true
+            } else if (blocks[i].type === "image" && !foundImage) {
+                result["imageLink"] = blocks[i].data.url
+                foundImage = true
+            } else if (blocks[i].type === "paragraph" && !foundCategories) {
+                if (blocks[i].data.text.toLowerCase().startsWith("tag:")) {
+                    result["categories"] = blocks[i].data.text.substring(4);
+                    foundCategories = true;
+                }
+            }
+            if (foundCategories && foundImage && foundTitle) {
+                break;
+            }
+        }
+        if (!foundTitle) {
+            result["title"] = "No Title"
+        }
+        if (!foundCategories) {
+            result["categories"] = ""
+        }
+        if (!foundImage) {
+            result["imageLink"] = "https://i.pinimg.com/736x/2c/b9/08/2cb908d9f969eede348d7ef1ce56a62c.jpg"
+        }
+        result["modifiedDate"] = new Date();
+        const meta = await Meta.findOne({ blogId: blogId }).exec();
+        if (!meta) {
+            console.error('Meta information not found');
+            return;
+        }
+        meta.title = result["title"];
+        meta.categories = result["categories"];
+        meta.imageLink = result["imageLink"];
+        meta.modifiedDate = result["modifiedDate"];
+        await meta.save();
+    } catch (error) {
+        console.error('Error fetching meta information:', error);
+    }
+
+}
 
 const getAllTheBlogs = async (req, res) => {
     const blogs = await Meta.find().lean();
@@ -19,6 +72,7 @@ const addBlog = async (req, res) => {
 
     if (blog) {
         const meta = await Meta.create({ blogId: blog._id, title: "TEST", createdDate: new Date(), modifiedDate: new Date() });
+        await updateMetaInfoFromContent(blog._id, content);
         return res.status(201).json(meta);
     } else {
         return res.status(401).json({ message: "Blog could not created" });
@@ -27,13 +81,12 @@ const addBlog = async (req, res) => {
 }
 
 const updateBlog = async (req, res) => {
-    const { userId, blogId, blogContent, categories, public } = req.body;
+    const { blogId, content } = req.body
+    await updateMetaInfoFromContent(blogId, content)
     const updatedBlog = await Blog.findByIdAndUpdate(
         blogId,
         {
-          blogContent: blogContent,
-          categories: categories,
-          public: public
+          blogContent: content
         },
         { new: true } // This option ensures that the updated document is returned
       );
@@ -50,8 +103,10 @@ const deleteBlog = async (req, res) => {
         return res.status(401).json({ message: "BlogId is required" });
     }
     const blog = await Blog.findById(blogId).exec();
+    const meta = await Meta.findOne({ blogId }).exec();
     const result = await blog.deleteOne();
-    const reply = `${result._id} deleted`;
+    const deletedMeta = await meta.deleteOne();
+    const reply = `${result._id} ${deletedMeta._id} deleted`;
 
     return res.json(reply)
 }   
@@ -59,6 +114,7 @@ const deleteBlog = async (req, res) => {
 
 const getSingleBlog = async (req, res) => {
     const blogId = req.params.blogId;
+    console.log(blogId)
     const blog = await Blog.findById(blogId).exec();
     if (!blog) {
         return res.status(400).json({ message: "Blog not found" });

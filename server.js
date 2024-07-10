@@ -7,10 +7,11 @@ const port = 3500;
 const { logger } = require("./middlewares/logger")
 const connectDB = require("./config/dbConn")
 const mongoose = require("mongoose")
+const corsOptions = require("./config/corsOptions.js")
 
 connectDB();
 
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(logger);
 app.use(express.urlencoded({ extended: false }))
 app.use(express.json())

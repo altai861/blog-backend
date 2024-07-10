@@ -11,8 +11,8 @@ const metaSchema = new Schema({
         required: true,
     },
     categories: {
-        type: [String],
-        default: []
+        type: String,
+        default: ""
     },
     createdDate: {
         type: Date,
